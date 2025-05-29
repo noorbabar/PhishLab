@@ -67,7 +67,6 @@ db.serialize(() => {
   )`);
 });
 
-// Email configuration (customize with your SMTP settings)
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'localhost',
   port: process.env.SMTP_PORT || 587,
@@ -347,6 +346,46 @@ app.get('/api/campaigns/:id/results', (req, res) => {
   });
 });
 
+// Test  - show all phishing links for a campaign
+app.get('/api/campaigns/:id/test-links', (req, res) => {
+  const campaignId = req.params.id;
+  
+  db.all(`
+    SELECT cr.token, t.email, t.name, c.template, c.name as campaign_name
+    FROM campaign_results cr
+    JOIN targets t ON cr.target_id = t.id
+    JOIN campaigns c ON cr.campaign_id = c.id
+    WHERE cr.campaign_id = ?
+    ORDER BY t.name
+  `, [campaignId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    const testLinks = rows.map(row => ({
+      name: row.name,
+      email: row.email,
+      testUrl: `${req.protocol}://${req.get('host')}/phish/${row.token}`,
+      token: row.token
+    }));
+    
+    res.json(testLinks);
+  });
+});
+
+// Bulk test mode - simulate email sending without actually sending
+app.post('/api/campaigns/:id/test-mode', (req, res) => {
+  const campaignId = req.params.id;
+  
+  db.run(`UPDATE campaign_results 
+          SET email_sent = 1 
+          WHERE campaign_id = ?`, [campaignId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    res.json({ 
+      message: `Test mode activated - ${this.changes} targets marked as sent`,
+      note: "Use the test links to simulate the phishing experience"
+    });
+  });
+});
 // Serve admin dashboard
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
