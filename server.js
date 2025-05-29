@@ -15,7 +15,7 @@ app.use(express.static('public'));
 const db = new sqlite3.Database('./phishbox.db');
 
 // Create tables
-db.serialise(() => {
+db.serialize(() => {
   // Users table (employees)
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
