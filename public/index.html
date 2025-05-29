@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishBox - Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+        }
+        
+        .header {
+            background: #343a40;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .nav-btn:hover { background: #0056b3; }
+        .nav-btn.active { background: #28a745; }
+        
+        .section {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .section.active { display: block; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .table th, .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-success { background: #d4edda; color: #155724; }
+        .status-warning { background: #fff3cd; color: #856404; }
+        .status-danger { background: #f8d7da; color: #721c24; }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-info { background: #d1ecf1; color: #0c5460; }
+        .alert-warning { background: #fff3cd; color: #856404; }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .nav { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎣 PhishBox - Phishing Simulation Platform</h1>
+    </div>
+    
+    <div class="container">
+        <div class="alert alert-warning">
+            <strong>⚠️ Educational Use Only:</strong> This platform is designed for authorized security training and awareness programs only. 
+            Ensure you have proper consent before conducting simulations.
+        </div>
+        
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-btn" onclick="showSection('targets')">Targets</button>
+            <button class="nav-btn" onclick="showSection('campaigns')">Campaigns</button>
+            <button class="nav-btn" onclick="showSection('results')">Results</button>
+        </nav>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+            <h2>Dashboard Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTargets">0</div>
+                    <div>Total Targets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeCampaigns">0</div>
+                    <div>Active Campaigns</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="clickedLinks">0</div>
+                    <div>Links Clicked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="enteredCredentials">0</div>
+                    <div>Credentials Entered</div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>Getting Started:</strong>
+                <ol style="margin-left: 20px; margin-top: 10px;">
+                    <li>Add targets (team members) in the Targets section</li>
+                    <li>Create a phishing campaign with a template</li>
+                    <li>Send simulation emails to your targets</li>
+                    <li>Monitor results and provide training</li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- Targets Section -->
+        <div id="targets" class="section">
+            <h2>Manage Targets</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>Add New Target</h3>
+                    <form id="targetForm">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" id="targetName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="targetEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Department:</label>
+                            <input type="text" id="targetDepartment">
+                        </div>
+                        <button type="submit" class="btn">Add Target</button>
+                    </form>
+                </div>
+                
+                <div>
+                    <h3>Target List</h3>
+                    <div id="targetsList">Loading targets...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Campaigns Section -->
+        <div id="campaigns" class="section">
+            <h2>Phishing Campaigns</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>Create New Campaign</h3>
+                    <form id="campaignForm">
+                        <div class="form-group">
+                            <label>Campaign Name:</label>
+                            <input type="text" id="campaignName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Template:</label>
+                            <select id="campaignTemplate" required>
+                                <option value="">Select template...</option>
+                                <option value="invoice">Fake Invoice</option>
+                                <option value="login">Account Verification</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Select Targets:</label>
+                            <div id="targetCheckboxes">Loading targets...</div>
+                        </div>
+                        <button type="submit" class="btn">Create Campaign</button>
+                    </form>
+                </div>
+                
+                <div>
+                    <h3>Campaign List</h3>
+                    <div id="campaignsList">Loading campaigns...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="results" class="section">
+            <h2>Campaign Results</h2>
+            <div class="form-group">
+                <label>Select Campaign:</label>
+                <select id="resultsSelect" onchange="loadResults()">
+                    <option value="">Select campaign...</option>
+                </select>
+            </div>
+            <div id="resultsTable"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentSection = 'dashboard';
+        let targets = [];
+        let campaigns = [];
+        
+        // Navigation
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(section).classList.add('active');
+            event.target.classList.add('active');
+            
+            currentSection = section;
+            
+            if (section === 'dashboard') loadDashboard();
+            if (section === 'targets') loadTargets();
+            if (section === 'campaigns') loadCampaigns();
+            if (section === 'results') loadCampaignOptions();
+        }
+        
+        // Load dashboard stats
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const stats = await response.json();
+                
+                document.getElementById('totalTargets').textContent = stats.totalTargets || 0;
+                document.getElementById('activeCampaigns').textContent = stats.activeCampaigns || 0;
+                document.getElementById('clickedLinks').textContent = stats.clickedLinks || 0;
+                document.getElementById('enteredCredentials').textContent = stats.enteredCredentials || 0;
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        // Load targets
+        async function loadTargets() {
+            try {
+                const response = await fetch('/api/targets');
+                targets = await response.json();
+                
+                const targetsList = document.getElementById('targetsList');
+                if (targets.length === 0) {
+                    targetsList.innerHTML = '<p>No targets added yet.</p>';
+                } else {
+                    targetsList.innerHTML = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${targets.map(target => `
+                                    <tr>
+                                        <td>${target.name}</td>
+                                        <td>${target.email}</td>
+                                        <td>${target.department || '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+                
+                updateTargetCheckboxes();
+            } catch (error) {
+                console.error('Error loading targets:', error);
+            }
+        }
+        
+        // Update target checkboxes for campaigns
+        function updateTargetCheckboxes() {
+            const container = document.getElementById('targetCheckboxes');
+            if (targets.length === 0) {
+                container.innerHTML = '<p>No targets available. Add targets first.</p>';
+            } else {
+                container.innerHTML = targets.map(target => `
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" value="${target.id}">
+                            ${target.name} (${target.email})
+                        </label>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // Load campaigns
+        async function loadCampaigns() {
+            try {
+                const response = await fetch('/api/campaigns');
+                campaigns = await response.json();
+                
+                const campaignsList = document.getElementById('campaignsList');
+                if (campaigns.length === 0) {
+                    campaignsList.innerHTML = '<p>No campaigns created yet.</p>';
+                } else {
+                    campaignsList.innerHTML = `
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Template</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${campaigns.map(campaign => `
+                                    <tr>
+                                        <td>${campaign.name}</td>
+                                        <td><span class="status-badge status-info">${campaign.template}</span></td>
+                                        <td><span class="status-badge ${campaign.active ? 'status-success' : 'status-warning'}">${campaign.active ? 'Active' : 'Inactive'}</span></td>
+                                        <td>
+                                            <button class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;" onclick="sendCampaign(${campaign.id})">Send Emails</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading campaigns:', error);
+            }
+        }
+        
+        // Load campaign options for results
+        async function loadCampaignOptions() {
+            const select = document.getElementById('resultsSelect');
+            select.innerHTML = '<option value="">Select campaign...</option>';
+            
+            campaigns.forEach(campaign => {
+                const option = document.createElement('option');
+                option.value = campaign.id;
+                option.textContent = campaign.name;
+                select.appendChild(option);
+            });
+        }
+        
+        // Load results for selected campaign
+        async function loadResults() {
+            const campaignId = document.getElementById('resultsSelect').value;
+            const resultsTable = document.getElementById('resultsTable');
+            
+            if (!campaignId) {
+                resultsTable.innerHTML = '';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/campaigns/${campaignId}/results`);
+                const results = await response.json();
+                
+                if (results.length === 0) {
+                    resultsTable.innerHTML = '<p>No results available for this campaign.</p>';
+                    return;
+                }
+                
+                const clickRate = (results.filter(r => r.link_clicked).length / results.length * 100).toFixed(1);
+                const credentialRate = (results.filter(r => r.credentials_entered).length / results.length * 100).toFixed(1);
+                
+                resultsTable.innerHTML = `
+                    <div class="stats-grid" style="margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <div class="stat-number">${clickRate}%</div>
+                            <div>Click Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${credentialRate}%</div>
+                            <div>Credential Entry Rate</div>
+                        </div>
+                    </div>
+                    
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Email Sent</th>
+                                <th>Link Clicked</th>
+                                <th>Credentials Entered</th>
+                                <th>Clicked At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.map(result => `
+                                <tr>
+                                    <td>${result.name}</td>
+                                    <td>${result.email}</td>
+                                    <td>${result.department || '-'}</td>
+                                    <td><span class="status-badge ${result.email_sent ? 'status-success' : 'status-warning'}">${result.email_sent ? 'Yes' : 'No'}</span></td>
+                                    <td><span class="status-badge ${result.link_clicked ? 'status-danger' : 'status-success'}">${result.link_clicked ? 'Yes' : 'No'}</span></td>
+                                    <td><span class="status-badge ${result.credentials_entered ? 'status-danger' : 'status-success'}">${result.credentials_entered ? 'Yes' : 'No'}</span></td>
+                                    <td>${result.clicked_at ? new Date(result.clicked_at).toLocaleString() : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error loading results:', error);
+                resultsTable.innerHTML = '<p>Error loading results.</p>';
+            }
+        }
+        
+        // Send campaign emails
+        async function sendCampaign(campaignId) {
+            if (!confirm('Are you sure you want to send phishing emails for this campaign?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/campaigns/${campaignId}/send`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                alert(result.message);
+            } catch (error) {
+                console.error('Error sending campaign:', error);
+                alert('Error sending campaign emails.');
+            }
+        }
+        
+        // Form handlers
+        document.getElementById('targetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('targetName').value,
+                email: document.getElementById('targetEmail').value,
+                department: document.getElementById('targetDepartment').value
+            };
+            
+            try {
+                const response = await fetch('/api/targets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Target added successfully!');
+                    document.getElementById('targetForm').reset();
+                    loadTargets();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error adding target:', error);
+                alert('Error adding target.');
+            }
+        });
+        
+        document.getElementById('campaignForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const selectedTargets = Array.from(document.querySelectorAll('#targetCheckboxes input:checked'))
+                .map(cb => parseInt(cb.value));
+            
+            if (selectedTargets.length === 0) {
+                alert('Please select at least one target.');
+                return;
+            }
+            
+            const data = {
+                name: document.getElementById('campaignName').value,
+                template: document.getElementById('campaignTemplate').value,
+                targetIds: selectedTargets
+            };
+            
+            try {
+                const response = await fetch('/api/campaigns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Campaign created successfully!');
+                    document.getElementById('campaignForm').reset();
+                    loadCampaigns();
+                    loadDashboard();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating campaign:', error);
+                alert('Error creating campaign.');
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+            loadTargets();
+            loadCampaigns();
+        });
+    </script>
+</body>
+</html>
