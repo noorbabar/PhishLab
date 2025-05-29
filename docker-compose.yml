@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  phishbox:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - SMTP_HOST=your-smtp-server.com
+      - SMTP_PORT=587
+      - SMTP_USER=your-email@domain.com
+      - SMTP_PASS=your-password
+      - FROM_EMAIL=security-training@yourcompany.com
+    volumes:
+      - phishbox_data:/app/data
+      - ./phishbox.db:/app/phishbox.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/dashboard"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  phishbox_data:
+    driver: local
+
