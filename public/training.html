@@ -1,11 +1,423 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Training Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishLab - Training Portal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .module-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .module-content {
+            margin: 1.5rem 0;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .difficulty-beginner { background: #d4edda; color: #155724; }
+        .difficulty-intermediate { background: #fff3cd; color: #856404; }
+        .difficulty-advanced { background: #f8d7da; color: #721c24; }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            font-size: 1rem;
+        }
+        .btn:hover { background: #5a6fd8; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        
+        .quiz-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .question {
+            margin-bottom: 1.5rem;
+        }
+        .question h4 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .options {
+            margin-left: 1rem;
+        }
+        .options label {
+            display: block;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .options label:hover {
+            background: #e9ecef;
+        }
+        .options input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+        .quiz-result {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        .quiz-correct { background: #d4edda; color: #155724; }
+        .quiz-incorrect { background: #f8d7da; color: #721c24; }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .module-nav {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .module-nav h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .module-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .module-item {
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .module-item:hover {
+            border-color: #667eea;
+        }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
-    <h1>Training Portal</h1>
-    <p>Training modules will be loaded here.</p>
-    <a href="/">Back to Dashboard</a>
+    <div class="header">
+        <div class="container">
+            <h1>🎓 Training Portal</h1>
+            <p>Cybersecurity Training & Phishing Awareness</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Module Navigation -->
+        <div class="module-nav" id="moduleNav">
+            <h3>Available Training Modules</h3>
+            <div class="module-list" id="moduleList">
+                <!-- Modules will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Module Content Area -->
+        <div id="moduleContent" class="hidden">
+            <!-- Individual module content will be loaded here -->
+        </div>
+
+        <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <script>
+        const trainingModules = [
+            {
+                id: 1,
+                title: 'Introduction to Phishing',
+                content: `
+                    <h2>What is Phishing?</h2>
+                    <p>Phishing is a type of cyber attack where criminals impersonate legitimate organizations to steal sensitive information like passwords, credit card numbers, and personal data.</p>
+                    
+                    <h3>How Phishing Works</h3>
+                    <p>Attackers typically send fraudulent emails, text messages, or create fake websites that appear to be from trusted sources like banks, social media platforms, or your employer. They trick you into:</p>
+                    <ul>
+                        <li>Entering your login credentials on fake websites</li>
+                        <li>Downloading malicious attachments</li>
+                        <li>Clicking on dangerous links</li>
+                        <li>Providing personal information over the phone</li>
+                    </ul>
+                    
+                    <h3>Why Phishing is Dangerous</h3>
+                    <p>Successful phishing attacks can lead to:</p>
+                    <ul>
+                        <li><strong>Identity theft</strong> - criminals use your personal information to impersonate you</li>
+                        <li><strong>Financial loss</strong> - unauthorized access to bank accounts and credit cards</li>
+                        <li><strong>Data breaches</strong> - compromising your organization's sensitive information</li>
+                        <li><strong>Malware infections</strong> - harmful software that can damage your computer or steal data</li>
+                    </ul>
+                    
+                    <h3>Key Takeaway</h3>
+                    <p>Always be skeptical of unexpected emails, especially those requesting personal information or urging immediate action. When in doubt, verify through official channels!</p>
+                `,
+                module_type: 'lesson',
+                difficulty: 'beginner'
+            },
+            {
+                id: 2,
+                title: 'Common Phishing Red Flags',
+                content: `
+                    <h2>Warning Signs of Phishing Attempts</h2>
+                    <p>Learning to identify red flags can protect you from falling victim to phishing attacks. Here are the most common warning signs:</p>
+                    
+                    <h3>🚩 Email Red Flags</h3>
+                    <ul>
+                        <li><strong>Urgent or threatening language</strong> - "Your account will be closed in 24 hours!"</li>
+                        <li><strong>Generic greetings</strong> - "Dear Customer" instead of your actual name</li>
+                        <li><strong>Suspicious sender addresses</strong> - subtle misspellings of legitimate domains</li>
+                        <li><strong>Poor grammar and spelling</strong> - legitimate organizations proofread their communications</li>
+                        <li><strong>Unexpected attachments</strong> - especially .exe, .zip, or other executable files</li>
+                        <li><strong>Requests for sensitive information</strong> - legitimate companies don't ask for passwords via email</li>
+                    </ul>
+                    
+                    <h3>🔗 Suspicious Links</h3>
+                    <p>Before clicking any link, hover over it to see the actual destination:</p>
+                    <ul>
+                        <li>Check for misspelled domain names (amazom.com instead of amazon.com)</li>
+                        <li>Look for suspicious subdomains (amazon.fake-site.com)</li>
+                        <li>Be wary of shortened URLs (bit.ly links) from unknown sources</li>
+                        <li>Notice unusual extensions (.tk, .ml instead of .com, .org)</li>
+                    </ul>
+                    
+                    <h3>🎯 Social Engineering Tactics</h3>
+                    <ul>
+                        <li><strong>Creating false urgency</strong> - pressuring you to act quickly</li>
+                        <li><strong>Authority impersonation</strong> - pretending to be your boss or IT department</li>
+                        <li><strong>Emotional manipulation</strong> - using fear, curiosity, or greed</li>
+                        <li><strong>Trust exploitation</strong> - referencing recent news or personal information</li>
+                    </ul>
+                    
+                    <h3>✅ What to Do When You Spot Red Flags</h3>
+                    <ol>
+                        <li>Don't click any links or download attachments</li>
+                        <li>Don't provide any personal information</li>
+                        <li>Verify the request through official channels</li>
+                        <li>Report suspicious emails to your IT security team</li>
+                        <li>Delete the suspicious email</li>
+                    </ol>
+                `,
+                module_type: 'lesson',
+                difficulty: 'beginner'
+            },
+            {
+                id: 3,
+                title: 'Email Security Quiz',
+                content: 'Test your knowledge of email security best practices.',
+                module_type: 'quiz',
+                difficulty: 'beginner',
+                questions: [
+                    {
+                        question: 'What should you do if you receive an unexpected email asking for your password?',
+                        options: [
+                            'Enter your password immediately',
+                            'Ignore the email',
+                            'Verify through official channels first',
+                            'Forward it to colleagues'
+                        ],
+                        correct_answer: 2,
+                        explanation: 'Always verify requests for sensitive information through official channels before responding.'
+                    },
+                    {
+                        question: 'Which of these is a red flag in an email?',
+                        options: [
+                            'Professional formatting',
+                            'Urgent deadline pressure',
+                            'Correct spelling',
+                            'Official company logo'
+                        ],
+                        correct_answer: 1,
+                        explanation: 'Urgent pressure tactics are commonly used in phishing emails to make you act without thinking.'
+                    },
+                    {
+                        question: 'What is the safest way to access your bank account?',
+                        options: [
+                            'Click links in emails',
+                            'Type the URL directly',
+                            'Use saved bookmarks',
+                            'Both B and C'
+                        ],
+                        correct_answer: 3,
+                        explanation: 'Always access sensitive accounts by typing URLs directly or using saved bookmarks, never through email links.'
+                    }
+                ]
+            }
+        ];
+
+        function loadModuleList() {
+            const moduleList = document.getElementById('moduleList');
+            moduleList.innerHTML = trainingModules.map(module => `
+                <div class="module-item" onclick="loadModule(${module.id})">
+                    <div class="difficulty-badge difficulty-${module.difficulty}">${module.difficulty}</div>
+                    <h4>${module.title}</h4>
+                    <p>${module.module_type === 'quiz' ? '📝 Quiz' : '📖 Lesson'}</p>
+                    <button class="btn btn-success">Start Module</button>
+                </div>
+            `).join('');
+        }
+
+        function loadModule(moduleId) {
+            const module = trainingModules.find(m => m.id === moduleId);
+            if (!module) return;
+
+            document.getElementById('moduleNav').classList.add('hidden');
+            const contentDiv = document.getElementById('moduleContent');
+            contentDiv.classList.remove('hidden');
+
+            if (module.module_type === 'quiz') {
+                loadQuiz(module);
+            } else {
+                loadLesson(module);
+            }
+        }
+
+        function loadLesson(module) {
+            document.getElementById('moduleContent').innerHTML = `
+                <div class="module-card">
+                    <div class="difficulty-badge difficulty-${module.difficulty}">${module.difficulty}</div>
+                    <h1>${module.title}</h1>
+                    <div class="module-content">
+                        ${module.content}
+                    </div>
+                    <button class="btn" onclick="completeModule()">Mark as Complete</button>
+                    <button class="btn" onclick="backToModules()">Back to Modules</button>
+                </div>
+            `;
+        }
+
+        function loadQuiz(module) {
+            document.getElementById('moduleContent').innerHTML = `
+                <div class="module-card">
+                    <div class="difficulty-badge difficulty-${module.difficulty}">${module.difficulty}</div>
+                    <h1>${module.title}</h1>
+                    <p>${module.content}</p>
+                    
+                    <div class="quiz-container">
+                        <form id="quizForm">
+                            ${module.questions.map((q, index) => `
+                                <div class="question">
+                                    <h4>Question ${index + 1}: ${q.question}</h4>
+                                    <div class="options">
+                                        ${q.options.map((option, optIndex) => `
+                                            <label>
+                                                <input type="radio" name="question_${index}" value="${optIndex}">
+                                                ${option}
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                            <button type="button" class="btn btn-success" onclick="submitQuiz(${JSON.stringify(module.questions).replace(/"/g, '&quot;')})">Submit Quiz</button>
+                        </form>
+                        <div id="quizResults"></div>
+                    </div>
+                    
+                    <button class="btn" onclick="backToModules()">Back to Modules</button>
+                </div>
+            `;
+        }
+
+        function submitQuiz(questions) {
+            const form = document.getElementById('quizForm');
+            const formData = new FormData(form);
+            let score = 0;
+            let results = [];
+
+            questions.forEach((q, index) => {
+                const selectedAnswer = formData.get(`question_${index}`);
+                const isCorrect = selectedAnswer == q.correct_answer;
+                if (isCorrect) score++;
+                
+                results.push({
+                    question: q.question,
+                    selectedAnswer: selectedAnswer ? q.options[selectedAnswer] : 'No answer',
+                    correctAnswer: q.options[q.correct_answer],
+                    isCorrect: isCorrect,
+                    explanation: q.explanation
+                });
+            });
+
+            const percentage = Math.round((score / questions.length) * 100);
+            const passed = percentage >= 70;
+
+            document.getElementById('quizResults').innerHTML = `
+                <div class="quiz-result ${passed ? 'quiz-correct' : 'quiz-incorrect'}">
+                    <h3>Quiz Results</h3>
+                    <p>You scored ${score} out of ${questions.length} (${percentage}%)</p>
+                    <p>${passed ? '🎉 Congratulations! You passed!' : '❌ You need 70% to pass. Please review the material and try again.'}</p>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h4>Question Review:</h4>
+                    ${results.map((result, index) => `
+                        <div style="margin: 1rem 0; padding: 1rem; border: 1px solid #dee2e6; border-radius: 4px;">
+                            <strong>Question ${index + 1}:</strong> ${result.question}<br>
+                            <strong>Your answer:</strong> ${result.selectedAnswer}<br>
+                            <strong>Correct answer:</strong> ${result.correctAnswer}<br>
+                            ${result.isCorrect ? 
+                                '<span style="color: green;">✅ Correct!</span>' : 
+                                '<span style="color: red;">❌ Incorrect</span>'
+                            }<br>
+                            <em>${result.explanation}</em>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // Scroll to results
+            document.getElementById('quizResults').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function completeModule() {
+            alert('Module completed! Great job!');
+            backToModules();
+        }
+
+        function backToModules() {
+            document.getElementById('moduleNav').classList.remove('hidden');
+            document.getElementById('moduleContent').classList.add('hidden');
+        }
+
+        // Load modules when page loads
+        document.addEventListener('DOMContentLoaded', loadModuleList);
+    </script>
 </body>
 </html>
