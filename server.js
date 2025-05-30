@@ -189,19 +189,6 @@ app.get('/api/simulations', (req, res) => {
   });
 });
 
-app.get('/api/simulations/:id', (req, res) => {
-  const simId = req.params.id;
-  
-  db.get('SELECT * FROM phishing_simulations WHERE id = ?', [simId], (err, simulation) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!simulation) return res.status(404).json({ error: 'Simulation not found' });
-    
-    simulation.red_flags = JSON.parse(simulation.red_flags || '[]');
-    res.json(simulation);
-  });
-});
-
-// Start simulation
 app.get('/simulation/:id', (req, res) => {
   const simId = req.params.id;
   
@@ -230,6 +217,7 @@ app.get('/simulation/:id', (req, res) => {
             padding: 15px 20px;
             border-bottom: 1px solid #ddd;
             border-radius: 8px 8px 0 0;
+            font-size: 14px;
           }
           .email-body { padding: 20px; }
           .controls {
@@ -239,16 +227,42 @@ app.get('/simulation/:id', (req, res) => {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
           .btn {
-            padding: 10px 20px;
-            margin: 5px;
+            padding: 12px 24px;
+            margin: 8px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
           }
-          .btn-danger { background: #dc3545; color: white; }
-          .btn-success { background: #28a745; color: white; }
-          .btn-warning { background: #ffc107; color: black; }
+          .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          }
+          .btn-danger { 
+            background: #dc3545; 
+            color: white; 
+          }
+          .btn-danger:hover { 
+            background: #c82333; 
+          }
+          .btn-success { 
+            background: #28a745; 
+            color: white; 
+          }
+          .btn-success:hover { 
+            background: #218838; 
+          }
+          .btn-warning { 
+            background: #ffc107; 
+            color: black; 
+          }
+          .btn-warning:hover { 
+            background: #e0a800; 
+          }
           .red-flags {
             background: #fff3cd;
             border: 1px solid #ffeeba;
@@ -256,12 +270,77 @@ app.get('/simulation/:id', (req, res) => {
             padding: 15px;
             margin: 15px 0;
           }
+          .red-flags h4 {
+            margin-bottom: 15px;
+            color: #856404;
+          }
+          .flag-option {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+          }
+          .flag-option:hover {
+            background: #f8f9fa;
+          }
+          .flag-option input {
+            margin-right: 10px;
+            transform: scale(1.2);
+          }
           .hidden { display: none; }
-          .result-good { background: #d4edda; color: #155724; padding: 20px; border-radius: 8px; margin-top: 20px; }
-          .result-bad { background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; margin-top: 20px; }
+          .result-good { 
+            background: #d4edda; 
+            color: #155724; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px;
+            border: 1px solid #c3e6cb;
+          }
+          .result-bad { 
+            background: #f8d7da; 
+            color: #721c24; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+          }
+          .result-good h3, .result-bad h3 {
+            margin-bottom: 15px;
+          }
+          .result-good ul, .result-bad ul {
+            margin: 15px 0;
+            padding-left: 20px;
+          }
+          .result-good li, .result-bad li {
+            margin: 8px 0;
+          }
+          .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+          }
+          .back-link:hover {
+            text-decoration: underline;
+          }
+          .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-weight: bold;
+          }
         </style>
       </head>
       <body>
+        <div class="timer" id="timer">Time: 0s</div>
+        
         <div class="container">
           <h1>🎯 Phishing Simulation: ${simulation.title}</h1>
           <p><strong>Instructions:</strong> Review the email below and decide if it's legitimate or a phishing attempt. Look for red flags!</p>
@@ -269,57 +348,94 @@ app.get('/simulation/:id', (req, res) => {
           <div class="email-container">
             <div class="email-header">
               <strong>From:</strong> billing@urgentpayments.net<br>
-              <strong>Subject:</strong> URGENT: Payment Required - Account Suspension Warning
+              <strong>To:</strong> you@yourcompany.com<br>
+              <strong>Subject:</strong> URGENT: Payment Required - Account Suspension Warning<br>
+              <strong>Date:</strong> ${new Date().toLocaleDateString()}
             </div>
             <div class="email-body">
               ${simulation.email_template}
             </div>
           </div>
           
-          <div class="controls">
-            <h3>What do you think?</h3>
-            <button class="btn btn-success" onclick="handleChoice(true)">✅ This looks legitimate</button>
-            <button class="btn btn-danger" onclick="handleChoice(false)">⚠️ This is a phishing attempt</button>
+          <div class="controls" id="mainControls">
+            <h3>🤔 What do you think about this email?</h3>
+            <p>Take your time to analyze the email above, then make your choice:</p>
+            
+            <button class="btn btn-success" onclick="handleChoice(true)">
+              ✅ This looks legitimate - I would trust it
+            </button>
+            <button class="btn btn-danger" onclick="handleChoice(false)">
+              ⚠️ This is a phishing attempt - Something seems suspicious
+            </button>
             
             <div class="red-flags">
-              <h4>🚩 Can you identify the red flags? (Check all that apply)</h4>
+              <h4>🚩 Before you decide, can you identify potential red flags?</h4>
+              <p><em>Check all that apply (this will help with your learning):</em></p>
               <div id="redFlagsList"></div>
-              <button class="btn btn-warning" onclick="checkRedFlags()">Check My Answers</button>
+              <button class="btn btn-warning" onclick="showRedFlagAnalysis()">
+                🔍 Analyze Red Flags
+              </button>
             </div>
           </div>
           
           <div id="result" class="hidden"></div>
+          
+          <a href="/" class="back-link">← Back to Dashboard</a>
         </div>
         
         <script>
           const simulation = ${JSON.stringify(simulation)};
           const redFlags = ${JSON.stringify(JSON.parse(simulation.red_flags || '[]'))};
           const startTime = Date.now();
+          let hasAnswered = false;
+          
+          // Update timer every second
+          const timerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = 'Time: ' + elapsed + 's';
+          }, 1000);
           
           // Generate red flag checkboxes
           document.getElementById('redFlagsList').innerHTML = redFlags.map((flag, index) => 
-            '<label style="display: block; margin: 8px 0;"><input type="checkbox" value="' + index + '"> ' + flag + '</label>'
+            '<label class="flag-option"><input type="checkbox" value="' + index + '"> ' + flag + '</label>'
           ).join('');
           
           function handleChoice(isLegitimate) {
+            if (hasAnswered) return;
+            hasAnswered = true;
+            
+            clearInterval(timerInterval);
             const timeTaken = Math.floor((Date.now() - startTime) / 1000);
             const fellForPhish = isLegitimate;
             
+            // Hide main controls
+            document.getElementById('mainControls').style.display = 'none';
+            
             let resultHtml = '';
             if (fellForPhish) {
-              resultHtml = '<div class="result-bad"><h3>⚠️ You fell for the phishing attempt!</h3><p>This was a simulated phishing email. Here''s what you should have noticed:</p><ul>' + 
-                redFlags.map(flag => '<li>' + flag + '</li>').join('') + 
-                '</ul><p><strong>Remember:</strong> Always verify suspicious emails through official channels before taking action.</p></div>';
+              resultHtml = '<div class="result-bad">' +
+                '<h3>⚠️ You fell for the phishing attempt!</h3>' +
+                '<p><strong>Don\\'t worry - this was just a simulation!</strong> This was designed to test your phishing detection skills.</p>' +
+                '<p>Here are the red flags you should have noticed:</p>' +
+                '<ul>' + redFlags.map(flag => '<li>' + flag + '</li>').join('') + '</ul>' +
+                '<p><strong>Key Learning:</strong> Always verify suspicious emails through official channels before taking any action. When in doubt, contact the organization directly using a phone number or website you know is legitimate.</p>' +
+                '<p><strong>Time taken:</strong> ' + timeTaken + ' seconds</p>' +
+                '</div>';
             } else {
-              resultHtml = '<div class="result-good"><h3>🎉 Great job! You correctly identified this as phishing!</h3><p>You successfully avoided falling for this phishing attempt. Here are the red flags you should have noticed:</p><ul>' + 
-                redFlags.map(flag => '<li>' + flag + '</li>').join('') + 
-                '</ul></div>';
+              resultHtml = '<div class="result-good">' +
+                '<h3>🎉 Excellent! You correctly identified this as phishing!</h3>' +
+                '<p>You successfully avoided falling for this phishing attempt. Your security awareness is working!</p>' +
+                '<p>Here are the red flags that helped you identify this as suspicious:</p>' +
+                '<ul>' + redFlags.map(flag => '<li>' + flag + '</li>').join('') + '</ul>' +
+                '<p><strong>Keep it up!</strong> Continue to be vigilant about suspicious emails and always verify before you trust.</p>' +
+                '<p><strong>Time taken:</strong> ' + timeTaken + ' seconds</p>' +
+                '</div>';
             }
             
             document.getElementById('result').innerHTML = resultHtml;
             document.getElementById('result').classList.remove('hidden');
             
-            // Log the result
+            // Log the result to the server
             fetch('/api/simulation-result', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -327,92 +443,48 @@ app.get('/simulation/:id', (req, res) => {
                 simulation_id: simulation.id,
                 fell_for_phish: fellForPhish,
                 time_taken: timeTaken,
-                identified_red_flags: []
+                identified_red_flags: getSelectedRedFlags()
               })
-            });
+            }).catch(err => console.log('Error logging result:', err));
+            
+            // Scroll to results
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
           }
           
-          function checkRedFlags() {
-            const checkedFlags = Array.from(document.querySelectorAll('#redFlagsList input:checked'))
-              .map(cb => cb.value);
+          function showRedFlagAnalysis() {
+            const checkedFlags = getSelectedRedFlags();
             
-            let score = checkedFlags.length;
-            let feedback = '<h4>Red Flag Analysis:</h4><ul>';
+            let feedback = '<div class="result-good">' +
+              '<h4>🚩 Red Flag Analysis:</h4>' +
+              '<p>Here\\'s how you did at identifying red flags:</p>' +
+              '<ul>';
             
             redFlags.forEach((flag, index) => {
-              if (checkedFlags.includes(index.toString())) {
-                feedback += '<li style="color: green;">✅ ' + flag + ' - Correctly identified!</li>';
+              if (checkedFlags.includes(index)) {
+                feedback += '<li style="color: #28a745; font-weight: bold;">✅ ' + flag + ' - You identified this correctly!</li>';
               } else {
-                feedback += '<li style="color: red;">❌ ' + flag + ' - You missed this one</li>';
+                feedback += '<li style="color: #dc3545;">❌ ' + flag + ' - You missed this red flag</li>';
               }
             });
             
-            feedback += '</ul><p>You identified ' + checkedFlags.length + ' out of ' + redFlags.length + ' red flags.</p>';
+            feedback += '</ul>' +
+              '<p><strong>Score:</strong> You identified ' + checkedFlags.length + ' out of ' + redFlags.length + ' red flags.</p>' +
+              '<p><em>Now make your decision about whether this email is legitimate or phishing.</em></p>' +
+              '</div>';
             
-            document.getElementById('result').innerHTML = '<div class="result-good">' + feedback + '</div>';
-            document.getElementById('result').classList.remove('hidden');
+=            const existingResult = document.getElementById('result');
+            existingResult.innerHTML = feedback;
+            existingResult.classList.remove('hidden');
+            existingResult.scrollIntoView({ behavior: 'smooth' });
+          }
+          
+          function getSelectedRedFlags() {
+            return Array.from(document.querySelectorAll('#redFlagsList input:checked'))
+              .map(cb => parseInt(cb.value));
           }
         </script>
       </body>
       </html>
     `);
   });
-});
-
-// Log simulation result
-app.post('/api/simulation-result', (req, res) => {
-  const { simulation_id, fell_for_phish, time_taken, identified_red_flags } = req.body;
-  
-  db.run(`INSERT INTO simulation_results 
-          (simulation_id, fell_for_phish, time_taken, identified_red_flags) 
-          VALUES (?, ?, ?, ?)`, 
-    [simulation_id, fell_for_phish, time_taken, JSON.stringify(identified_red_flags)], 
-    function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true, id: this.lastID });
-    });
-});
-
-// Get user progress
-app.get('/api/progress/:userId', (req, res) => {
-  const userId = req.params.userId;
-  
-  db.all(`
-    SELECT tm.*, up.completed, up.score, up.completed_at
-    FROM training_modules tm
-    LEFT JOIN user_progress up ON tm.id = up.module_id AND up.user_id = ?
-    ORDER BY tm.id
-  `, [userId], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
-
-// Get simulation results
-app.get('/api/simulation-results', (req, res) => {
-  db.all(`
-    SELECT sr.*, ps.title, ps.difficulty
-    FROM simulation_results sr
-    JOIN phishing_simulations ps ON sr.simulation_id = ps.id
-    ORDER BY sr.completed_at DESC
-  `, (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(rows);
-  });
-});
-
-// Serve main dashboard
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Training portal
-app.get('/training', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'training.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`PhishLab Educational Platform running on port ${PORT}`);
-  console.log(`Access dashboard at: http://localhost:${PORT}`);
-  console.log(`Access training portal at: http://localhost:${PORT}/training`);
 });
